@@ -1,0 +1,42 @@
+advertiser_id,company,industry,tier,region,signup_date,trajectory
+1,Urban Threads,Retail,Mid-Market,US-Central,2025-05-28,declining
+2,Nordic Home,Retail,Enterprise,Canada,2024-03-25,growing
+3,Bright Basket,Retail,Mid-Market,LatAm,2025-01-17,growing
+4,Pace Apparel,Retail,SMB,US-West,2024-04-24,growing
+5,Stonewell Goods,Retail,Mid-Market,US-West,2024-10-10,stable
+6,Lattice Living,Retail,Mid-Market,US-East,2024-03-16,growing
+7,Maple & Birch,Retail,Mid-Market,US-East,2025-02-27,growing
+8,Coast Supply Co,Retail,Mid-Market,US-West,2024-01-26,stable
+9,Verve Retail,Retail,Enterprise,Canada,2025-05-27,churned
+10,Daybreak Mart,Retail,Mid-Market,US-East,2024-02-22,stable
+11,Brewline Coffee,Food & Beverage,Enterprise,LatAm,2024-09-24,growing
+12,Harvest Kitchen,Food & Beverage,Mid-Market,US-East,2024-12-23,stable
+13,Salt & Stem,Food & Beverage,Mid-Market,US-Central,2024-04-09,churned
+14,Greenleaf Eats,Food & Beverage,SMB,LatAm,2025-04-28,stable
+15,Crumb Bakehouse,Food & Beverage,Enterprise,US-East,2024-04-15,growing
+16,Tideline Seafood,Food & Beverage,Mid-Market,US-East,2024-05-26,declining
+17,Roasted Bean Co,Food & Beverage,Mid-Market,Canada,2024-10-20,growing
+18,Forkful,Food & Beverage,Enterprise,US-West,2025-06-16,declining
+19,Voyageur Trips,Travel,Enterprise,US-Central,2025-03-16,declining
+20,Atlas Stays,Travel,SMB,US-West,2024-02-09,stable
+21,Wanderlight,Travel,SMB,US-West,2024-12-02,stable
+22,Northbound Travel,Travel,Mid-Market,US-Central,2024-06-24,declining
+23,Tripcrest,Travel,SMB,US-Central,2024-09-11,growing
+24,Ledgerline,Finance,SMB,US-East,2024-10-30,declining
+25,Northfield Bank,Finance,Mid-Market,US-West,2024-08-18,growing
+26,Sunrise Capital,Finance,Enterprise,US-East,2024-12-09,stable
+27,Vault Finance,Finance,SMB,US-Central,2024-05-14,stable
+28,Clearwater Credit,Finance,Enterprise,US-West,2024-02-11,growing
+29,Driftline Motors,Auto,SMB,Canada,2025-03-12,stable
+30,Apex Auto Group,Auto,SMB,US-East,2024-04-10,declining
+31,Roadcrest,Auto,SMB,US-West,2025-04-28,stable
+32,Ferro Vehicles,Auto,Enterprise,Canada,2024-08-18,declining
+33,Brightstack,Tech,Enterprise,US-West,2024-10-02,stable
+34,Loopwire,Tech,Enterprise,US-East,2024-07-01,churned
+35,Nimbus Cloud Co,Tech,Mid-Market,LatAm,2025-01-14,stable
+36,Vector Apps,Tech,SMB,US-East,2024-05-15,stable
+37,Pixel Forge,Tech,Mid-Market,US-East,2024-01-20,stable
+38,Echo Studios,Entertainment,Enterprise,US-West,2024-05-30,churned
+39,Reelhouse,Entertainment,Enterprise,US-West,2024-09-21,churned
+40,Cadence Media,Entertainment,SMB,US-Central,2025-02-15,growing
+41,Playline Games,Entertainment,Mid-Market,US-East,2024-12-07,stable
