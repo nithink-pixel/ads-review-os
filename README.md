@@ -1,48 +1,63 @@
 # Ads Review OS
-**An internal advertising business review platform, built to mirror what a Strategy & Planning Analyst supports before every monthly and quarterly business review.**
 
-## The Problem
-A VP of Advertising needs a trusted, repeatable way to answer three questions every month: How is revenue trending? Which advertisers are healthy, at risk, or churning? And can I trust these numbers enough to make a budget call based on them?
+A self-contained advertising business review platform. The goal was to build the thing a Strategy & Planning analyst actually leans on every month: a place to check revenue, see which advertisers are healthy versus slipping, and trust that the numbers on screen are the same numbers everyone else on the team is looking at.
 
-Most internal dashboards fail at the third question. Numbers get recalculated slightly differently by different teams, nobody owns a metric's definition, and "data quality" is a vague aspiration rather than something measurable. This project builds the full pipeline, from raw data to governed, trusted, self-service reporting, to solve that end to end.
+## Why this exists
 
-## Architecture
+Most internal dashboards I've used or built have the same failure mode. Two people pull "CTR" for the same period and get different numbers, because somewhere along the line someone wrote a slightly different query, or a different team's definition of "active advertiser" doesn't match yours. Nobody notices until a leadership review goes sideways over a number nobody can explain.
+
+This project is my attempt at fixing that end to end rather than patching it dashboard by dashboard. Every metric has exactly one formula, one owner, and one source table. Bad data gets caught and quarantined before it ever reaches a chart, not silently dropped, not silently included. And the whole pipeline is auditable, so if someone asks "why does this number look off," there's an actual answer instead of a shrug.
+
+## How it's put together
+
 ```
-Raw Data (synthetic ad marketplace)
-    -> ETL Pipeline (validation + quarantine, not silent deletion)
-    -> Data Warehouse (DuckDB)
-    -> KPI Governance Catalog (one definition, one owner, per metric)
-    -> Executive Review Dashboard (MBR / QBR / Advertiser Health / Self-Service)
+raw csv data (synthetic ad marketplace)
+      |
+      v
+ETL pipeline -- validates, quarantines bad rows, derives CTR/CVR/CPC once
+      |
+      v
+DuckDB warehouse
+      |
+      v
+KPI catalog -- formula + owner + source + refresh cadence, per metric
+      |
+      v
+Streamlit dashboard -- scorecard, MBR, QBR, advertiser health, data trust panel
 ```
 
-## What's Built (and verified working)
+### The data (data/generate_data.py)
 
-**Phase 1 — Data Generation** (`data/generate_data.py`)
-41 advertisers across 7 industries, 127 campaigns, ~8,600 days of performance data spanning two years. Industry-specific CTR/CVR/CPC benchmarks (not uniform random noise), realistic weekday/weekend and holiday seasonality, and four advertiser lifecycle trajectories (growing, stable, declining, churned). A small number of intentional data anomalies are injected, so the validation layer has something real to catch.
+41 advertisers spread across 7 industries, 127 campaigns, and around 8,600 rows of daily performance data covering two years. I didn't want this to be obviously fake uniform-random data, so each industry has its own CTR/CVR/CPC benchmark range, there's weekday/weekend seasonality plus a holiday bump in November/December, and each advertiser gets randomly assigned a lifecycle, growing, stable, declining, or churned, that actually plays out across their daily numbers over time. I also seeded in a handful of bad rows on purpose so the validation layer downstream has something real to catch.
 
-**Phase 2 — ETL Pipeline** (`etl/run_etl.py`)
-Four validation rules enforced on every load: clicks cannot exceed impressions, conversions cannot exceed clicks, spend cannot be negative, and no nulls in key fields. Violating records are **quarantined**, not silently deleted, every quarantine event is logged with a timestamp, rule, row count, and action taken. This run caught all 13 injected anomalies correctly. Derived metrics (CTR, CVR, CPC, week/month/quarter rollups) are computed once at the warehouse layer, so every downstream query uses an identical definition.
+### ETL (etl/run_etl.py)
 
-**Phase 3 — KPI Governance Catalog** (`etl/build_kpi_catalog.py`)
-Six core KPIs, each with a formula, plain-language definition, business owner, source table, refresh cadence, and business purpose. A live data quality score (currently 99.85%) is computed directly from the ETL validation log, not hardcoded.
+Four rules get checked on every load: clicks can't exceed impressions, conversions can't exceed clicks, spend can't go negative, and none of the key fields can be null. Anything that fails gets pulled into a quarantine table along with which rule it broke, rather than just getting deleted. Last run caught all 13 of the anomalies I'd seeded in. CTR, CVR, CPC, and the week/month/quarter rollups all get computed once here, at the warehouse layer, so every dashboard query downstream pulls from the same definition.
 
-**Phase 4 — Executive Dashboard** (`dashboard/app.py`, Streamlit)
-Five views: an Executive Scorecard (revenue, CTR, CVR, CPC, active advertisers at a glance), an MBR view (month-over-month comparison), a QBR view (quarter-over-quarter and year-over-year), an Advertiser Health segmentation (Growing / Stable / At Risk / Churned, based on trailing 60-day spend trend vs. the prior 60 days), and a Data Trust panel exposing the live KPI catalog and validation log. All filters (industry, region, tier, date range) are self-service, no SQL required.
+### KPI catalog (etl/build_kpi_catalog.py)
 
-## A Real Insight the Platform Surfaces
-Filtering to the Retail industry and looking at the Advertiser Health tab, several Retail accounts show up in the "At Risk" segment with spend down more than 15% over the trailing 60 days. Cross-referencing against the QBR view, this tracks with a broader Q3 dip. The platform doesn't just show this, it's the kind of insight an MBR is built to surface: which segment is the actual driver, not just "revenue is down."
+Six metrics, each with its formula spelled out, a plain definition, who owns it, which table it comes from, and how often it refreshes. There's a data quality score on here too, currently around 99.85%, computed live from the ETL log rather than typed in.
 
-## What I Deliberately Did Not Build
-A natural-language AI query layer ("ask why revenue declined") was considered, but cut from this version. Building it shallow, in a way that could give a wrong or hallucinated answer live in an interview, would have hurt more than helped. The KPI catalog and data model here are structured specifically so that layer could be added cleanly later: every metric already has a formula and source table defined, which is the actual prerequisite for a reliable AI assistant.
+### Dashboard (dashboard/app.py)
 
-## Tech Stack
-Python (Pandas, NumPy) for data generation and transformation, DuckDB as the warehouse, Streamlit and Plotly for the dashboard layer. No external API dependencies, runs fully locally.
+Five tabs. An executive scorecard for the quick view. An MBR tab comparing the current month against the prior one. A QBR tab doing the same at the quarter level, plus year-over-year where there's enough history. An advertiser health tab that buckets every advertiser into Growing, Stable, At Risk, or Churned based on how their spend over the last 60 days compares to the 60 before that. A data trust tab, which makes the KPI catalog and validation log visible, so anyone using the dashboard can check exactly how a number was calculated. All filtering (industry, region, tier, date range) is point-and-click, no SQL needed.
 
-## Running It
-```bash
-pip install pandas numpy duckdb streamlit plotly faker
+## Something it actually surfaced
+
+Filtering down to Retail and looking at the advertiser health tab, a cluster of Retail accounts show up At Risk, spend down more than 15% over the trailing 60 days. Cross-checking that against the QBR tab lines up with a broader dip that quarter. That's the point of this, not just saying revenue is down, but letting you find which segment is driving it.
+
+## What's not in here
+
+I left out a natural-language query layer. I thought about it, but decided against shipping something half-built that could give a wrong answer if someone actually tried it. The KPI catalog is structured so that layer could be added cleanly later, every metric already has its formula and source defined, which is the actual prerequisite for it.
+
+## Stack
+
+Python, Pandas, DuckDB, Streamlit, Plotly. Nothing calls out to an external API, runs fully locally once the data's generated.
+
+## Running it
+
+pip install -r requirements.txt
 python3 data/generate_data.py
 python3 etl/run_etl.py
 python3 etl/build_kpi_catalog.py
 streamlit run dashboard/app.py
-```
